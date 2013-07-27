@@ -98,9 +98,20 @@ module RDF
       def clear_statements
         q = "SELECT ?g WHERE { GRAPH ?g { ?s ?p ?o . } FILTER (?g != <#{DEFAULT_CONTEXT}>) }"
         @client.query(q).each do |solution|
-          @client.set("CLEAR GRAPH <#{solution[:g]}>", DEFAULT_CONTEXT) 
+          @client.set("CLEAR GRAPH <#{solution[:g]}>", DEFAULT_CONTEXT)
         end
-        @client.set("CLEAR GRAPH <#{DEFAULT_CONTEXT}>", DEFAULT_CONTEXT) 
+        @client.set("CLEAR GRAPH <#{DEFAULT_CONTEXT}>", DEFAULT_CONTEXT)
+      end
+
+      ##
+      # @see RDF::Enumerable#each_context
+      def each_context
+        return enum_context unless block_given?
+
+        q = "SELECT DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o . } FILTER (?g != <#{DEFAULT_CONTEXT}>)}"
+        @client.query(q).each{|solution|
+          yield solution[:g]
+        }
       end
 
       ##
@@ -134,7 +145,7 @@ module RDF
         end
       end
 
-      ## 
+      ##
       # @private
       # @see RDF::Writable#writable?
       # @return [Boolean]
@@ -142,15 +153,15 @@ module RDF
         true
       end
 
-      ## 
+      ##
       # @private
       # @see RDF::Durable#durable?
       # @return [Boolean]
       def durable?
         true
       end
-      
-      ## 
+
+      ##
       # @private
       # @see RDF::Countable#empty?
       # @return [Boolean]
